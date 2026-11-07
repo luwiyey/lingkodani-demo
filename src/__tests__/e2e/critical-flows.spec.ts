@@ -83,7 +83,11 @@ test.describe('Lingkod-Ani critical flows', () => {
     await expect(page.getByRole('button', { name: 'Gamitin ang Petsa' }).first()).toBeVisible();
     await expect(page.getByText('10 SMS', { exact: true })).toBeVisible();
 
-    await page.getByRole('tab', { name: 'Demograpiko ng Magsasaka' }).evaluate((element) => (element as HTMLElement).click());
+    // Radix tabs switch on mouse-down or keyboard focus, not on a script-level element.click().
+    const demographicsTab = page.getByRole('tab', { name: 'Demograpiko ng Magsasaka' });
+    await demographicsTab.focus();
+    await demographicsTab.press('Enter');
+    await expect(demographicsTab).toHaveAttribute('data-state', 'active');
     await expect(page.getByText('Farmers in Scope')).toBeVisible();
     await expect(page.getByText('Average Farmer Age')).toBeVisible();
     await expect(page.getByText('Gender Distribution')).toBeVisible();
