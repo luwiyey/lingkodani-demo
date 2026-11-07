@@ -67,6 +67,17 @@ export async function processLiveFollowUpMessages(actorName = "system") {
 
       await db.collection(firebaseCollections.smsMessages).doc(message.id).update(withoutUndefined({
         followUpSentAt: result?.updatedMessage.followUpSentAt ?? message.followUpSentAt,
+        // Save the whole follow-up ladder state. Saving only followUpSentAt left the attempt count at 0
+        // and the due time in the past, so a follow-up was texted on every run (every 30 minutes).
+        ...(result
+          ? {
+              followUpLastReminderAt: result.updatedMessage.followUpLastReminderAt,
+              followUpAttemptCount: result.updatedMessage.followUpAttemptCount,
+              followUpDueAt: result.updatedMessage.followUpDueAt ?? null,
+              followUpStopReason: result.updatedMessage.followUpStopReason ?? null,
+              followUpOutcome: result.updatedMessage.followUpOutcome ?? null,
+            }
+          : {}),
         assignedTo: reminderResult?.updatedMessage.assignedTo ?? baseMessage.assignedTo,
         assignedAt: reminderResult?.updatedMessage.assignedAt ?? baseMessage.assignedAt,
         caseStatus: reminderResult?.updatedMessage.caseStatus ?? baseMessage.caseStatus,

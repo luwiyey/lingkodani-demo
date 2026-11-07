@@ -9,6 +9,8 @@ import { defaultSystemSettings } from "@/lib/system-settings";
 import type { LogbookEntry, SmsMessage, SystemSettings, User } from "@/lib/types";
 
 const OFFICIAL_REMINDER_INTERVAL_MINUTES = 60;
+/** After this many reminders for one case, staff see it in the queue instead of getting more texts. */
+export const MAX_OFFICIAL_REMINDERS = 3;
 
 function addMinutes(isoTimestamp: string, minutes: number) {
   return new Date(new Date(isoTimestamp).getTime() + minutes * 60 * 1000).toISOString();
@@ -132,6 +134,11 @@ export function isOfficialReminderDue(message: SmsMessage, now = Date.now(), for
 
   if (force) {
     return true;
+  }
+
+  // Without a cap every open case texted an official every hour, forever.
+  if ((message.officialReminderCount ?? 0) >= MAX_OFFICIAL_REMINDERS) {
+    return false;
   }
 
   if (!message.officialReminderDueAt) {
